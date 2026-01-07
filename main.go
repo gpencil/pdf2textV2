@@ -4,7 +4,6 @@ import (
 	"archive/zip"
 	"bytes"
 	"encoding/json"
-	"flag"
 	"fmt"
 	"html/template"
 	"io"
@@ -20,73 +19,12 @@ import (
 )
 
 func main() {
-	// 命令行参数
-	inputDir := flag.String("input", "", "输入PDF文件目录（必需）")
-	outputDir := flag.String("output", "", "输出TXT文件目录（可选，默认与输入目录相同）")
-	webMode := flag.Bool("web", false, "启动Web服务器模式")
-	port := flag.String("port", "8082", "Web服务器端口（默认8082）")
-	flag.Parse()
-
-	// Web服务器模式
-	if *webMode {
-		startWebServer(*port)
-		return
-	}
-
-	// 命令行模式
-	// 检查必需参数
-	if *inputDir == "" {
-		fmt.Println("错误：必须指定输入目录")
-		fmt.Println("使用方法: pdf2txt -input <PDF目录> [-output <TXT目录>]")
-		fmt.Println("或启动Web界面: pdf2txt -web [-port 8080]")
-		os.Exit(1)
-	}
-
-	// 如果未指定输出目录，使用输入目录
-	if *outputDir == "" {
-		*outputDir = *inputDir
-	}
-
-	// 确保输出目录存在
-	if err := os.MkdirAll(*outputDir, 0755); err != nil {
-		fmt.Printf("创建输出目录失败: %v\n", err)
-		os.Exit(1)
-	}
-
-	// 遍历输入目录下的所有PDF文件
-	err := filepath.Walk(*inputDir, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-
-		// 只处理PDF文件
-		if !info.IsDir() && strings.HasSuffix(strings.ToLower(info.Name()), ".pdf") {
-			if err := convertPDFToText(path, *outputDir); err != nil {
-				fmt.Printf("转换失败 %s: %v\n", path, err)
-			} else {
-				fmt.Printf("转换成功: %s\n", path)
-			}
-		}
-
-		return nil
-	})
-
-	if err != nil {
-		fmt.Printf("遍历目录失败: %v\n", err)
-		os.Exit(1)
-	}
-
-	fmt.Println("\n批量转换完成！")
-}
-
-// Web服务器相关函数
-func startWebServer(port string) {
 	http.HandleFunc("/", indexHandler)
 	http.HandleFunc("/api/upload-convert", uploadConvertHandler)
 	http.HandleFunc("/api/upload-save-local", uploadSaveLocalHandler)
 
-	log.Printf("Web服务器启动在 http://localhost:%s\n", port)
-	log.Fatal(http.ListenAndServe(":"+port, nil))
+	log.Println("Web服务器启动在 http://localhost:8089")
+	log.Fatal(http.ListenAndServe(":8089", nil))
 }
 
 func indexHandler(w http.ResponseWriter, r *http.Request) {
